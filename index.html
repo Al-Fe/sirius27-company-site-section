@@ -305,6 +305,7 @@
     .consent { display: grid; grid-template-columns: 20px 1fr; align-items: start; gap: 10px; color: var(--muted); font-size: 12px; }
     .consent input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--navy); }
     .form-actions { display: flex; align-items: center; gap: 14px; margin-top: 20px; }
+    .form-actions .btn[hidden] { display: none; }
     .form-status { min-height: 24px; margin-top: 14px; font-size: 13px; font-weight: 700; }
     #quick-report-form .form-status:empty { display: none; }
     .form-status.error { color: var(--danger); }
@@ -892,7 +893,7 @@
         const abandon = document.createElement('button');
         abandon.type = 'button';
         abandon.className = 'btn btn-outline';
-        abandon.textContent = 'Отказаться от проверки и редактировать';
+        abandon.textContent = 'Изменить данные';
         abandon.hidden = true;
         button.parentElement.append(abandon);
         const clearPending = () => {
@@ -903,9 +904,10 @@
           button.textContent = originalText;
         };
         abandon.addEventListener('click', () => {
-          if (busy || !confirm('Предыдущая заявка могла быть принята. Новая отправка может создать ещё одну заявку. Продолжить редактирование?')) return;
+          if (busy || !pending || !confirm('Предыдущая заявка могла быть принята. Новая отправка может создать ещё одну заявку. Продолжить редактирование?')) return;
           clearPending();
-          setStatus(form, 'Предыдущая проверка прекращена. Данные можно изменить.');
+          setStatus(form, 'Данные можно изменить. Если предыдущая заявка была принята, она не отменена.');
+          form.elements.name.focus();
         });
         form.addEventListener('submit', async event => {
           event.preventDefault();
