@@ -774,12 +774,14 @@
   <dialog id="service-dialog" aria-labelledby="service-dialog-title">
     <div class="dialog-head"><h2 id="service-dialog-title">Заявка на услугу</h2><button class="dialog-close" type="button">Закрыть</button></div>
     <div class="dialog-body">
-      <p class="form-intro">Укажите основные параметры проекта. Мы уточним задачу и подготовим предложение.</p>
+      <p class="form-intro" id="service-dialog-intro">Укажите основные параметры проекта. Мы уточним задачу и подготовим предложение.</p>
       <form class="lead-form" id="service-form" action="/api/leads" method="post" data-form-kind="service_request">
         <input type="hidden" name="service_code" id="modal-service-code">
         <div class="honeypot" aria-hidden="true"><label>Не заполняйте <input name="website" tabindex="-1" autocomplete="off"></label></div>
         <div class="form-grid">
           <div class="field full"><label for="modal-service-title">Услуга</label><input id="modal-service-title" readonly></div>
+          <div class="field full"><label id="modal-goal-label" for="modal-goal">Цель проверки *</label><select id="modal-goal" data-request-detail required><option value="">Выберите</option></select></div>
+          <div class="field full"><label id="modal-scope-label" for="modal-scope">Что входит в задачу *</label><input id="modal-scope" data-request-detail maxlength="500" required></div>
           <div class="field"><label for="modal-name">Имя *</label><input id="modal-name" name="name" autocomplete="name" required></div>
           <div class="field"><label for="modal-company">Компания</label><input id="modal-company" name="company" autocomplete="organization"></div>
           <div class="field"><label for="modal-phone">Телефон</label><input id="modal-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel"></div>
@@ -787,6 +789,8 @@
           <p class="contact-choice-note field full">Укажите телефон или email, чтобы мы могли ответить.</p>
           <div class="field"><label for="modal-type">Тип объекта</label><input id="modal-type" name="project_type"></div>
           <div class="field"><label for="modal-stage">Стадия проекта</label><input id="modal-stage" name="stage" placeholder="П, Р, исполнительная"></div>
+          <div class="field"><label for="modal-format">Формат документов</label><select id="modal-format" name="document_format"><option value="">Выберите</option><option>PDF</option><option>PDF и DWG</option><option>DWG, Revit или BIM</option><option>Сканы и изображения</option><option>Смешанный комплект</option><option>Не уверен</option></select></div>
+          <div class="field" id="modal-equipment-wrap" hidden><label for="modal-equipment">Состав оборудования</label><select id="modal-equipment" name="equipment_variety" disabled><option value="">Выберите</option><option>Преимущественно один производитель</option><option>Несколько производителей и систем</option><option>Сильно разнородный состав</option><option>Требуется подбор аналогов</option><option>Не уверен</option></select></div>
           <div class="field"><label for="modal-volume">Объём</label><input id="modal-volume" name="volume" placeholder="Разделы, листы или файлы"></div>
           <div class="field"><label for="modal-deadline">Желаемый срок</label><input id="modal-deadline" name="deadline" type="date"></div>
           <div class="field full"><label for="modal-message">Кратко о задаче *</label><textarea id="modal-message" name="message" required></textarea></div>
@@ -813,12 +817,72 @@
       ]);
 
       const serviceCatalog = Object.freeze({
-        express_audit: Object.freeze({ title: 'Экспресс-аудит' }),
-        full_audit: Object.freeze({ title: 'Полный технический аудит' }),
-        project_adaptation: Object.freeze({ title: 'Адаптация проекта' }),
-        contractor_audit: Object.freeze({ title: 'Независимая проверка подрядчика' }),
-        as_built_audit: Object.freeze({ title: 'Аудит исполнительной документации' }),
-        engineering_analysis: Object.freeze({ title: 'Инженерный анализ' }),
+        express_audit: Object.freeze({
+          title: 'Экспресс-аудит',
+          request: Object.freeze({
+            intro: 'Для экспресс-аудита укажите приоритет проверки и состав разделов. Это поможет сразу направить проект на нужную проверку.',
+            goalLabel: 'Что проверить в первую очередь?',
+            goalOptions: Object.freeze(['Критические ошибки', 'Комплектность и противоречия', 'Спецификацию и оборудование', 'Риски перед монтажом или закупкой', 'Другое']),
+            scopeLabel: 'Разделы или системы для экспресс-аудита',
+            scopePlaceholder: 'Например, АПС, СОУЭ, СКС, ЭОМ',
+            showEquipment: false
+          })
+        }),
+        full_audit: Object.freeze({
+          title: 'Полный технический аудит',
+          request: Object.freeze({
+            intro: 'Для полного аудита укажите цель проверки и какие разделы должны войти в работу.',
+            goalLabel: 'Цель полного аудита',
+            goalOptions: Object.freeze(['До закупки', 'До начала монтажа', 'Перед экспертизой или согласованием', 'Проверка проектировщика', 'Комплексная проверка']),
+            scopeLabel: 'Какие разделы входят в аудит?',
+            scopePlaceholder: 'Например, ЭОМ, СС, АПС, СОУЭ и смежные разделы',
+            showEquipment: true
+          })
+        }),
+        project_adaptation: Object.freeze({
+          title: 'Адаптация проекта',
+          request: Object.freeze({
+            intro: 'Опишите причину адаптации и что в проекте требуется сохранить или изменить.',
+            goalLabel: 'Причина адаптации',
+            goalOptions: Object.freeze(['Замена оборудования или производителя', 'Изменение условий эксплуатации', 'Снижение стоимости', 'Изменение технических требований', 'Изменение исходных данных']),
+            scopeLabel: 'Что нужно сохранить или изменить?',
+            scopePlaceholder: 'Например, заменить производителя без изменения функционала',
+            showEquipment: true
+          })
+        }),
+        contractor_audit: Object.freeze({
+          title: 'Независимая проверка подрядчика',
+          request: Object.freeze({
+            intro: 'Укажите предмет проверки подрядчика и системы или этап работ, которые нужно сверить.',
+            goalLabel: 'Что проверить у подрядчика?',
+            goalOptions: Object.freeze(['Замены оборудования', 'Объёмы и состав работ', 'Соответствие проекту', 'Стоимость и завышение спецификации', 'Качество выполненных решений']),
+            scopeLabel: 'Проверяемые системы или этап работ',
+            scopePlaceholder: 'Например, закупка АПС и СОУЭ, выполненный монтаж',
+            showEquipment: true
+          })
+        }),
+        as_built_audit: Object.freeze({
+          title: 'Аудит исполнительной документации',
+          request: Object.freeze({
+            intro: 'Укажите, какую часть исполнительного комплекта требуется проверить и из чего он состоит.',
+            goalLabel: 'Что требуется проверить?',
+            goalOptions: Object.freeze(['Полнота исполнительной документации', 'Соответствие проекту и изменениям', 'Кабельные журналы', 'Исполнительные схемы', 'Комплект целиком']),
+            scopeLabel: 'Состав исполнительного комплекта',
+            scopePlaceholder: 'Например, схемы, журналы, акты, паспорта и сертификаты',
+            showEquipment: false
+          })
+        }),
+        engineering_analysis: Object.freeze({
+          title: 'Инженерный анализ',
+          request: Object.freeze({
+            intro: 'Укажите цель инженерного анализа и решения, для которых нужно сравнить или оптимизировать варианты.',
+            goalLabel: 'Основная цель анализа',
+            goalOptions: Object.freeze(['Снижение стоимости', 'Упрощение архитектуры', 'Сокращение номенклатуры', 'Повышение надёжности и обслуживаемости', 'Сравнение вариантов']),
+            scopeLabel: 'Системы или решения для анализа',
+            scopePlaceholder: 'Например, архитектура СС, состав оборудования, варианты замены',
+            showEquipment: true
+          })
+        }),
         recommendation: Object.freeze({ title: 'Не уверен — нужна рекомендация' }),
         other: Object.freeze({ title: 'Другая задача' })
       });
@@ -928,20 +992,61 @@
 
       const dialog = document.getElementById('service-dialog');
       const dialogClose = dialog.querySelector('.dialog-close');
+      const serviceForm = document.getElementById('service-form');
+      const serviceDialogIntro = document.getElementById('service-dialog-intro');
       const modalServiceCode = document.getElementById('modal-service-code');
       const modalServiceTitle = document.getElementById('modal-service-title');
+      const modalGoalLabel = document.getElementById('modal-goal-label');
+      const modalGoal = document.getElementById('modal-goal');
+      const modalScopeLabel = document.getElementById('modal-scope-label');
+      const modalScope = document.getElementById('modal-scope');
+      const modalEquipmentWrap = document.getElementById('modal-equipment-wrap');
+      const modalEquipment = document.getElementById('modal-equipment');
       const modalName = document.getElementById('modal-name');
+
+      const applyServiceProfile = serviceCode => {
+        const service = serviceCatalog[serviceCode];
+        const profile = service && service.request;
+        if (!profile) return false;
+
+        serviceDialogIntro.textContent = profile.intro;
+        modalGoalLabel.textContent = `${profile.goalLabel} *`;
+        modalGoal.dataset.requestDetail = profile.goalLabel;
+        modalGoal.replaceChildren(
+          new Option('Выберите', ''),
+          ...profile.goalOptions.map(option => new Option(option, option))
+        );
+        modalGoal.value = '';
+
+        modalScopeLabel.textContent = `${profile.scopeLabel} *`;
+        modalScope.dataset.requestDetail = profile.scopeLabel;
+        modalScope.placeholder = profile.scopePlaceholder;
+        modalScope.value = '';
+
+        modalEquipmentWrap.hidden = !profile.showEquipment;
+        modalEquipment.disabled = !profile.showEquipment;
+        modalEquipment.value = '';
+        return true;
+      };
+
       let dialogTrigger = null;
       document.querySelectorAll('.service-request').forEach(button => {
         button.addEventListener('click', () => {
+          if (serviceForm.dataset.pendingRequest === 'true') {
+            dialogTrigger = button;
+            if (!dialog.open) dialog.showModal();
+            setStatus(serviceForm, 'Сначала подтвердите предыдущую отправку кнопкой «Повторить» или выберите «Изменить данные».', 'error');
+            return;
+          }
+
           const serviceCode = button.dataset.serviceCode || '';
           const service = serviceCatalog[serviceCode];
-          if (!service || !coreServiceCodes.includes(serviceCode)) return;
+          if (!service || !coreServiceCodes.includes(serviceCode) || !applyServiceProfile(serviceCode)) return;
           dialogTrigger = button;
           modalServiceCode.value = serviceCode;
           modalServiceTitle.value = service.title;
           dialog.showModal();
-          requestAnimationFrame(() => modalName.focus());
+          requestAnimationFrame(() => modalGoal.focus());
         });
       });
       dialogClose.addEventListener('click', () => dialog.close());
@@ -970,6 +1075,15 @@
         delete values.service_title;
         values.consent = values.consent === 'accepted';
         if (!serviceCatalog[values.service_code]) throw new Error('Unknown service identity');
+
+        const requestDetails = Array.from(form.querySelectorAll('[data-request-detail]'))
+          .filter(field => !field.disabled && typeof field.value === 'string' && field.value.trim())
+          .map(field => `${field.dataset.requestDetail}: ${field.value.trim()}`);
+        if (requestDetails.length) {
+          const comment = typeof values.message === 'string' ? values.message.trim() : '';
+          values.message = `Параметры заявки:\n- ${requestDetails.join('\n- ')}${comment ? `\n\nКомментарий:\n${comment}` : ''}`;
+        }
+
         return {
           schema_version: 'sirius.intake.v1',
           client_request_id: requestId,
@@ -1006,6 +1120,7 @@
         const clearPending = () => {
           if (pending) unresolvedForms -= 1;
           pending = null;
+          delete form.dataset.pendingRequest;
           controls.forEach((control, index) => { control.disabled = initialDisabled[index]; });
           abandon.hidden = true;
           button.textContent = originalText;
@@ -1042,6 +1157,7 @@
               const key = makeId();
               pending = { key, body: JSON.stringify(buildPayload(form, key)) };
               unresolvedForms += 1;
+              form.dataset.pendingRequest = 'true';
             } catch (_) {
               setStatus(form, 'Безопасная отправка недоступна в этом браузере.', 'error');
               return;
