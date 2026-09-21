@@ -100,6 +100,58 @@ class CommonFormFrameworkTests(unittest.TestCase):
         self.assertIn("public_request_number", HTML)
         self.assertIn("button.textContent = pending ? 'Повторить' : originalText;", HTML)
 
+    def test_each_core_service_has_a_request_profile(self) -> None:
+        for code in CORE_CODES:
+            with self.subTest(code=code):
+                self.assertRegex(
+                    HTML,
+                    rf"{re.escape(code)}:\\s*Object\\.freeze\\(\\{{[\\s\\S]*?request:\\s*Object\\.freeze\\(\\{{",
+                )
+
+        expected_goals = (
+            "Что проверить в первую очередь?",
+            "Цель полного аудита",
+            "Причина адаптации",
+            "Что проверить у подрядчика?",
+            "Что требуется проверить?",
+            "Основная цель анализа",
+        )
+        for label in expected_goals:
+            with self.subTest(label=label):
+                self.assertIn(label, HTML)
+
+    def test_service_request_collects_structured_existing_api_fields(self) -> None:
+        service_form = re.search(
+            r'<form[^>]+id="service-form"[^>]*>(.*?)</form>',
+            HTML,
+            flags=re.S,
+        )
+        self.assertIsNotNone(service_form)
+        block = service_form.group(1)
+        self.assertIn('name="document_format"', block)
+        self.assertIn('name="equipment_variety"', block)
+        self.assertIn('id="modal-goal" data-request-detail required', block)
+        self.assertIn('id="modal-scope" data-request-detail', block)
+        self.assertNotIn('name="modal-goal"', block)
+        self.assertNotIn('name="modal-scope"', block)
+
+    def test_service_specific_details_are_folded_into_message_not_extra_json_keys(self) -> None:
+        required_fragments = (
+            "const requestDetails = Array.from(form.querySelectorAll('[data-request-detail]'))",
+            "field.dataset.requestDetail",
+            "values.message =",
+            "Параметры заявки:",
+            "Комментарий:",
+        )
+        for fragment in required_fragments:
+            with self.subTest(fragment=fragment):
+                self.assertIn(fragment, HTML)
+
+    def test_unresolved_service_request_cannot_switch_to_another_service(self) -> None:
+        self.assertIn("form.dataset.pendingRequest = 'true';", HTML)
+        self.assertIn("delete form.dataset.pendingRequest;", HTML)
+        self.assertIn("serviceForm.dataset.pendingRequest === 'true'", HTML)
+        self.assertIn("Сначала подтвердите предыдущую отправку", HTML)
 
 if __name__ == "__main__":
     unittest.main()
