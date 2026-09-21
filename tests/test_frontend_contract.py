@@ -153,5 +153,12 @@ class CommonFormFrameworkTests(unittest.TestCase):
         self.assertIn("serviceForm.dataset.pendingRequest === 'true'", HTML)
         self.assertIn("Сначала подтвердите предыдущую отправку", HTML)
 
+    def test_dynamic_disabled_state_survives_ambiguous_retry_edit(self) -> None:
+        self.assertIn("let disabledBeforePending = null;", HTML)
+        self.assertIn("disabledBeforePending = controls.map(control => control.disabled);", HTML)
+        self.assertIn("const restoreDisabled = disabledBeforePending || initialDisabled;", HTML)
+        self.assertIn("control.disabled = restoreDisabled[index]", HTML)
+        self.assertIn('name="message" maxlength="9000" required', HTML)
+
 if __name__ == "__main__":
     unittest.main()
