@@ -793,7 +793,7 @@
           <div class="field" id="modal-equipment-wrap" hidden><label for="modal-equipment">Состав оборудования</label><select id="modal-equipment" name="equipment_variety" disabled><option value="">Выберите</option><option>Преимущественно один производитель</option><option>Несколько производителей и систем</option><option>Сильно разнородный состав</option><option>Требуется подбор аналогов</option><option>Не уверен</option></select></div>
           <div class="field"><label for="modal-volume">Объём</label><input id="modal-volume" name="volume" placeholder="Разделы, листы или файлы"></div>
           <div class="field"><label for="modal-deadline">Желаемый срок</label><input id="modal-deadline" name="deadline" type="date"></div>
-          <div class="field full"><label for="modal-message">Кратко о задаче *</label><textarea id="modal-message" name="message" required></textarea></div>
+          <div class="field full"><label for="modal-message">Кратко о задаче *</label><textarea id="modal-message" name="message" maxlength="9000" required></textarea></div>
           <div class="field full"><label class="consent"><input name="consent" type="checkbox" value="accepted" required><span>Согласен на обработку указанных контактных данных для ответа на заявку. *</span></label></div>
         </div>
         <div class="form-actions"><button class="btn btn-dark" type="submit">Отправить заявку</button></div>
@@ -1111,6 +1111,7 @@
         const originalText = button.textContent;
         const controls = Array.from(form.querySelectorAll('input, select, textarea'));
         const initialDisabled = controls.map(control => control.disabled);
+        let disabledBeforePending = null;
         const abandon = document.createElement('button');
         abandon.type = 'button';
         abandon.className = 'btn btn-outline';
@@ -1121,7 +1122,9 @@
           if (pending) unresolvedForms -= 1;
           pending = null;
           delete form.dataset.pendingRequest;
-          controls.forEach((control, index) => { control.disabled = initialDisabled[index]; });
+          const restoreDisabled = disabledBeforePending || initialDisabled;
+          controls.forEach((control, index) => { control.disabled = restoreDisabled[index]; });
+          disabledBeforePending = null;
           abandon.hidden = true;
           button.textContent = originalText;
         };
@@ -1158,6 +1161,7 @@
               pending = { key, body: JSON.stringify(buildPayload(form, key)) };
               unresolvedForms += 1;
               form.dataset.pendingRequest = 'true';
+              disabledBeforePending = controls.map(control => control.disabled);
             } catch (_) {
               setStatus(form, 'Безопасная отправка недоступна в этом браузере.', 'error');
               return;
