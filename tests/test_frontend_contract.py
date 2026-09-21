@@ -105,7 +105,7 @@ class CommonFormFrameworkTests(unittest.TestCase):
             with self.subTest(code=code):
                 self.assertRegex(
                     HTML,
-                    rf"{re.escape(code)}:\\s*Object\\.freeze\\(\\{{[\\s\\S]*?request:\\s*Object\\.freeze\\(\\{{",
+                    rf"{re.escape(code)}:\s*Object\.freeze\(\{{[\s\S]*?request:\s*Object\.freeze\(\{{",
                 )
 
         expected_goals = (
