@@ -1188,7 +1188,9 @@
               signal: controller.signal
             });
             const contentType = response.headers.get('content-type') || '';
-            if (response.status >= 400 && response.status < 500 && response.status !== 409) {
+            // A later refusal cannot disprove an earlier ambiguous acceptance.
+            // Only an initial explicit rejection may release the frozen request.
+            if (!pending.uncertain && response.status >= 400 && response.status < 500 && response.status !== 409) {
               clearPending();
               setStatus(form, 'Сервер отклонил запрос. Проверьте данные перед новой отправкой.', 'error');
               return;
@@ -1209,6 +1211,7 @@
             form.reset();
             fallback.hidden = true;
           } catch (error) {
+            pending.uncertain = true;
             setStatus(form, 'Не удалось получить подтверждение сервера. Заявка могла быть принята. Повторите проверку этой же заявки кнопкой «Повторить» и не создавайте новую.', 'error');
             abandon.hidden = false;
           } finally {
